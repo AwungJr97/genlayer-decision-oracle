@@ -1,0 +1,13 @@
+{
+  "name": "genlayer-decision-oracle",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "deploy": "genlayer deploy",
+    "deploy:bradbury": "genlayer network testnet-bradbury && genlayer deploy",
+    "deploy:studio": "genlayer network studionet && genlayer deploy"
+  },
+  "dependencies": {
+    "genlayer-js": "latest"
+  }
+}
