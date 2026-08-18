@@ -17,26 +17,23 @@ class DecisionOracle(gl.Contract):
 
     @gl.public.write
     def resolve(self):
-        prompt = f"""
-You are a neutral decision oracle.
+        def get_input() -> str:
+            return f"Question: {self.question}\nContext: {self.context}"
 
-Question:
-{self.question}
-
-Context:
-{self.context}
-
-Return exactly one of:
-YES
-NO
-UNCERTAIN
-
-Choose YES only when the context clearly supports the proposition.
-Choose NO only when the context clearly contradicts it.
-Choose UNCERTAIN when the available context is insufficient or ambiguous.
-"""
-        result = gl.eq_principle.prompt_non_comparative(prompt)
-        self.decision = result.strip().upper()
+        self.decision = gl.eq_principle.prompt_non_comparative(
+            get_input,
+            task=(
+                "Act as a neutral decision oracle. Classify the proposition using "
+                "the supplied question and context. Return exactly one token: YES, "
+                "NO, or UNCERTAIN."
+            ),
+            criteria=(
+                "The output must be exactly YES, NO, or UNCERTAIN. Return YES only "
+                "when the context clearly supports the proposition, NO only when "
+                "the context clearly contradicts it, and UNCERTAIN when the context "
+                "is insufficient or ambiguous."
+            ),
+        )
 
     @gl.public.view
     def get_decision(self) -> str:
