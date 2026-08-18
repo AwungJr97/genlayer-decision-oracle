@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GenLayer Decision Oracle</title>
+  <style>
+    body{font-family:system-ui,sans-serif;max-width:760px;margin:40px auto;padding:0 20px}
+    textarea,input,button{width:100%;box-sizing:border-box;margin:8px 0;padding:12px}
+    button{cursor:pointer}
+    pre{white-space:pre-wrap;background:#f4f4f4;padding:12px}
+  </style>
+</head>
+<body>
+  <h1>Decision Oracle</h1>
+  <p>Submit a proposition and supporting context, then ask GenLayer validators to reach a consensus decision.</p>
+  <input id="address" placeholder="Deployed contract address (0x...)" />
+  <input id="question" placeholder="Question / proposition" />
+  <textarea id="context" placeholder="Evidence or context"></textarea>
+  <button id="run">Resolve with GenLayer</button>
+  <pre id="output">Ready.</pre>
+
+  <script type="module">
+    import { createClient } from "https://esm.sh/genlayer-js";
+    import { studionet } from "https://esm.sh/genlayer-js/chains";
+    import { TransactionStatus } from "https://esm.sh/genlayer-js/types";
+
+    const output = document.querySelector('#output');
+    const client = createClient({ chain: studionet });
+
+    document.querySelector('#run').onclick = async () => {
+      const address = document.querySelector('#address').value.trim();
+      const question = document.querySelector('#question').value.trim();
+      const context = document.querySelector('#context').value.trim();
+      if (!address || !question || !context) {
+        output.textContent = 'Fill all fields first.';
+        return;
+      }
+      try {
+        output.textContent = 'Submitting transaction...';
+        const txHash = await client.writeContract({
+          address,
+          functionName: 'resolve',
+          args: [],
+          value: 0n
+        });
+        output.textContent = `Transaction: ${txHash}\nWaiting for GenLayer consensus...`;
+        const receipt = await client.waitForTransactionReceipt({
+          hash: txHash,
+          status: TransactionStatus.ACCEPTED
+        });
+        const decision = await client.readContract({
+          address,
+          functionName: 'get_decision',
+          args: []
+        });
+        output.textContent = `Consensus status: ${receipt.statusName}\nDecision: ${decision}`;
+      } catch (error) {
+        output.textContent = `Error: ${error.message || error}`;
+      }
+    };
+  </script>
+</body>
+</html>
