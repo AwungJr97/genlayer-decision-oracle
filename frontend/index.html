@@ -41,7 +41,7 @@
         const txHash = await client.writeContract({
           address,
           functionName: 'resolve',
-          args: [],
+          args: [question, context],
           value: 0n
         });
         output.textContent = `Transaction: ${txHash}\nWaiting for GenLayer consensus...`;
@@ -49,12 +49,12 @@
           hash: txHash,
           status: TransactionStatus.ACCEPTED
         });
-        const decision = await client.readContract({
+        const request = await client.readContract({
           address,
-          functionName: 'get_decision',
+          functionName: 'get_request',
           args: []
         });
-        output.textContent = `Consensus status: ${receipt.statusName}\nDecision: ${decision}`;
+        output.textContent = `Consensus status: ${receipt.statusName}\nQuestion: ${request.question}\nContext: ${request.context}\nDecision: ${request.decision}`;
       } catch (error) {
         output.textContent = `Error: ${error.message || error}`;
       }
