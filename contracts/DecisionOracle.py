@@ -10,17 +10,22 @@ class DecisionOracle(gl.Contract):
     context: str
     decision: str
 
-    def __init__(self, question: str, context: str):
+    def __init__(self, question: str = "", context: str = ""):
         self.question = question
         self.context = context
         self.decision = "PENDING"
 
     @gl.public.write
-    def resolve(self):
+    def resolve(self, question: str, context: str):
+        # Persist the exact browser inputs for this request before invoking consensus.
+        self.question = question
+        self.context = context
+        self.decision = "PENDING"
+
         def get_input() -> str:
             return f"Question: {self.question}\nContext: {self.context}"
 
-        self.decision = gl.eq_principle.prompt_non_comparative(
+        result = gl.eq_principle.prompt_non_comparative(
             get_input,
             task=(
                 "Act as a neutral decision oracle. Classify the proposition using "
@@ -35,6 +40,20 @@ class DecisionOracle(gl.Contract):
             ),
         )
 
+        # Normalize defensively so contract state always contains an allowed decision.
+        normalized = str(result).strip().upper()
+        if normalized not in ("YES", "NO", "UNCERTAIN"):
+            normalized = "UNCERTAIN"
+        self.decision = normalized
+
     @gl.public.view
     def get_decision(self) -> str:
         return self.decision
+
+    @gl.public.view
+    def get_request(self) -> dict:
+        return {
+            "question": self.question,
+            "context": self.context,
+            "decision": self.decision,
+        }
