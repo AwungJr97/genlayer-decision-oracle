@@ -6,13 +6,15 @@ A small GenLayer application that turns a question plus supporting context into 
 
 Users provide a proposition and evidence/context. The `DecisionOracle` Intelligent Contract asks GenLayer validators to evaluate the proposition and returns exactly one of `YES`, `NO`, or `UNCERTAIN`.
 
+Each submitted question and context is persisted in contract state together with the resolved decision, so the browser request can be verified after consensus.
+
 ## GenLayer integration
 
 - Python Intelligent Contract using `gl.Contract`
 - Non-deterministic LLM execution through GenLayer
 - Equivalence Principle via `prompt_non_comparative`
-- Public write method: `resolve()`
-- Public view method: `get_decision()`
+- Public write method: `resolve(question, context)`
+- Public view methods: `get_decision()` and `get_request()`
 - Browser frontend using `genlayer-js`
 
 ## Run
@@ -22,6 +24,18 @@ Users provide a proposition and evidence/context. The `DecisionOracle` Intellige
 3. Serve the `frontend/` directory with any static HTTP server.
 4. Enter a proposition and supporting context.
 5. Click **Resolve with GenLayer** and wait for validator consensus.
+6. The UI reads the persisted question, context, and decision from `get_request()`.
+
+## Tests
+
+The repository includes a GenLayer Testing Suite test covering the full request flow with a mocked validator/LLM response:
+
+```bash
+pip install genlayer-test
+pytest tests/ -v
+```
+
+The test submits question and context to `resolve()`, verifies both inputs persist in state, and asserts that the resulting decision is one of `YES`, `NO`, or `UNCERTAIN`. It also checks that an unexpected model response safely normalizes to `UNCERTAIN`.
 
 ## Example
 
